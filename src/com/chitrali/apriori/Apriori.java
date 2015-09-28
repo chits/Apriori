@@ -75,98 +75,93 @@ static int mincon;
 		
 	}
 	
-static int numberofOccurence(Set<Integer> set){
-		int supportCount=0;
-		boolean hasElement;
-		for(Set<Integer> set1:dataSet){
-			int count=0;
-			for(Integer e:set){
-				hasElement=false;
-				for(Integer i: set1){
-					if(e==i){
-						hasElement=true;
-						count++;
-						break;
+	static int numberofOccurence(Set<Integer> set){
+			int supportCount=0;
+			boolean hasElement;
+			for(Set<Integer> set1:dataSet){
+				int count=0;
+				for(Integer e:set){
+					hasElement=false;
+					for(Integer i: set1){
+						if(e==i){
+							hasElement=true;
+							count++;
+							break;
+						}
 					}
+					if(!hasElement)
+						break;
 				}
-				if(!hasElement)
-					break;
+				if(count==set.size())
+					supportCount++;
 			}
-			if(count==set.size())
-				supportCount++;
-		}
-		
-		return supportCount;
-		
-	
-}
-	
-static void prune(){
-	frequentSetTemp.clear();
-	for(Set<Integer> key:candidateSet.keySet()){
-		if(candidateSet.get(key)>=minsup){
-			frequentSetTemp.put(key,candidateSet.get(key));
-			frequentSet.put(key,candidateSet.get(key));
-		}
+			
+			return supportCount;
 	}
-	System.out.println("****L****");
-	for(Set<Integer> key : frequentSetTemp.keySet()){
-		System.out.println(key + ": =  " + frequentSetTemp.get(key));
-		
-	}
-}
-
-static void frequentItemSetGeneration(){
-	boolean next=true;
-	int element=0;
-	int size=1;
-	Set<Set<Integer>> candidate=new HashSet<>();
-	while(next){
-		candidate.clear();
-		candidateSet.clear();
-		for(Set<Integer> l1:frequentSetTemp.keySet()){
-			Set<Integer>temp=l1;
-			for(Set<Integer>  l2:frequentSetTemp.keySet()){
-				for(Integer i:l2){
-					try{
-						element=i;
-					}catch( Exception e){
-						break;
-					}
-					temp.add(element);
-					if(temp.size()!=size){
-						Integer[] array=temp.toArray(new Integer[0]);
-						Set<Integer> temp2 =new HashSet<>();
-						for(Integer j:array)
-							temp2.add(j);
-						candidate.add(temp2);
-						temp.remove(element);
-					}
-				}
-				
+	
+	static void prune(){
+		frequentSetTemp.clear();
+		for(Set<Integer> key:candidateSet.keySet()){
+			if(candidateSet.get(key)>=minsup){
+				frequentSetTemp.put(key,candidateSet.get(key));
+				frequentSet.put(key,candidateSet.get(key));
 			}
 		}
-		
-		for(Set<Integer> s:candidate){
-				candidateSet.put(s, numberofOccurence(s));			
+		System.out.println("****L****");
+		for(Set<Integer> key : frequentSetTemp.keySet()){
+			System.out.println(key + ": =  " + frequentSetTemp.get(key));
 			
 		}
-		System.out.println("****C****");
-		for(Set<Integer> key:candidateSet.keySet())
-			System.out.println(key + ": =  " + candidateSet.get(key));
-		
-		prune();
-		if(frequentSetTemp.size()<=1)
-			next=false;
-		size++;
 	}
-	System.out.println("****LastFrequentItemSet****");
-	for(Set<Integer> k:frequentSetTemp.keySet())
-		System.out.println(k + ": =  " + frequentSetTemp.get(k));
 
+	static void frequentItemSetGeneration(){
+		boolean next=true;
+		int element=0;
+		int size=1;
+		Set<Set<Integer>> candidate=new HashSet<>();
+		while(next){
+			candidate.clear();
+			candidateSet.clear();
+			for(Set<Integer> l1:frequentSetTemp.keySet()){
+				Set<Integer>temp=l1;
+				for(Set<Integer>  l2:frequentSetTemp.keySet()){
+					for(Integer i:l2){
+						try{
+							element=i;
+						}catch( Exception e){
+							break;
+						}
+						temp.add(element);
+						if(temp.size()!=size){
+							Integer[] array=temp.toArray(new Integer[0]);
+							Set<Integer> temp2 =new HashSet<>();
+							for(Integer j:array)
+								temp2.add(j);
+							candidate.add(temp2);
+							temp.remove(element);
+						}
+					}
+					
+				}
+			}
+			
+			for(Set<Integer> s:candidate){
+					candidateSet.put(s, numberofOccurence(s));			
+				
+			}
+			System.out.println("****C****");
+			for(Set<Integer> key:candidateSet.keySet())
+				System.out.println(key + ": =  " + candidateSet.get(key));
+			
+			prune();
+			if(frequentSetTemp.size()<=1)
+				next=false;
+			size++;
+		}
+		System.out.println("****LastFrequentItemSet****");
+		for(Set<Integer> k:frequentSetTemp.keySet())
+			System.out.println(k + ": =  " + frequentSetTemp.get(k));
+	}
 }
-	
-
-	}
 
 
