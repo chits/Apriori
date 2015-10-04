@@ -8,9 +8,11 @@ static List<Set<Integer>> dataSet= new ArrayList<Set<Integer>>();
 static	Map<Set<Integer>,Integer> candidateSet = new HashMap<Set<Integer>,Integer>();
 static	Map<Set<Integer>,Integer> frequentSet=new HashMap<Set<Integer>,Integer>();
 static	Map<Set<Integer>,Integer> frequentSetTemp=new HashMap<Set<Integer>,Integer>();
+static Map<Set<Integer>,Set<Set<Integer>>> associationRules=new HashMap<Set<Integer>,Set<Set<Integer>>>();
+static Map<Integer,String> productName=new HashMap<Integer,String>();
 
 static int minsup; 
-static int mincon;
+static float mincon;
 
 	public static void main(String[] args) {
 		Scanner in=new Scanner(System.in);
@@ -20,11 +22,12 @@ static int mincon;
 			Class.forName("oracle.jdbc.driver.OracleDriver");
 			Connection con=DriverManager.getConnection("jdbc:oracle:thin:@prophet.njit.edu:1521:course","cr252","CKHMs7icB");
 			Statement st = con.createStatement();
+			Statement st2=con.createStatement();
 			String sql ="select * from tset1 ORDER BY tid";
+			String sql2="select * from products order by pid";
 			ResultSet res=st.executeQuery(sql);
-			
-			
-			
+			ResultSet res2=st2.executeQuery(sql2);
+						
 			/* read from database and map it to the memory implementation of database 
 			 * while counting the support of each element*/
 			
@@ -45,33 +48,50 @@ static int mincon;
 				}
 				dataSet.add(row);
 			}
+			// id to product Map
+			while(res2.next()){
+				
+				Integer id=res2.getInt(1);
+				String name=res2.getString(2);
+				productName.put(id, name);			
+				
+			}
 			con.close();
 			
-			System.out.println("Enter the minimum support value: \n");
+			System.out.println("Enter the minimum support value:");
 			minsup=in.nextInt();
-			System.out.println("\nEnter the minimum confidence value: \n");
-			mincon=in.nextInt();
+		System.out.println("\nEnter the minimum confidence value:");
+			mincon=in.nextFloat();
 			
 			/* dataSet is the java Implementation of the DataBase*/
-			System.out.println("The Transaction dataset:\n");
+			System.out.println("****The Transaction dataset****:\n");
 			for(Set<Integer> set:dataSet){
 				for(Integer i:set){
 					System.out.print(i+" ");
 				}
-				System.out.println("\n");
+//				System.out.println("\n");
 			}
+			
+			System.out.println("****Id to product Mapping****");
+			for(Integer i: productName.keySet())
+				System.out.println(i+productName.get(i));
 			
 			System.out.println("****C****");
 			for(Set<Integer> key:candidateSet.keySet()){
 				System.out.println(key + ": =  " + candidateSet.get(key));
 							
 			}
-			
+		
+			frequentSet.clear();
 			prune();
 			frequentItemSetGeneration();
+			mineAssociationRules();
+			getAssociationRules();
+			
+			
 		}
 		catch(Exception e){System.out.println(e);}
-			
+			in.close();
 		
 	}
 	
@@ -112,6 +132,7 @@ static int mincon;
 			System.out.println(key + ": =  " + frequentSetTemp.get(key));
 			
 		}
+		
 	}
 
 	static void frequentItemSetGeneration(){
@@ -158,10 +179,95 @@ static int mincon;
 				next=false;
 			size++;
 		}
-		System.out.println("****LastFrequentItemSet****");
-		for(Set<Integer> k:frequentSetTemp.keySet())
-			System.out.println(k + ": =  " + frequentSetTemp.get(k));
+//		System.out.println("****LastFrequentItemSet****");
+//		for(Set<Integer> k:frequentSetTemp.keySet())
+//			System.out.println(k + ": =  " + frequentSetTemp.get(k));
 	}
+	
+	static void mineAssociationRules(){
+		for(Set<Integer> s:frequentSet.keySet()){
+			if(s.size()>1){
+				mine(s);
+		  }
+		}
+	}
+	static void mine(Set<Integer> itemset){
+		// According to set symmetry only need to get half the proper subset
+		int n=itemset.size()/2; 
+		for(int i=1;i<=n;i++){
+			Set<Set<Integer>> properSubset=ProperSubset.getProperSubset(i, itemset);
+			for (Set<Integer> s:properSubset){
+				Set<Integer> finalset=new HashSet<Integer>();
+				finalset.addAll(itemset);
+				finalset.removeAll(s);
+				calculateConfidence(s,finalset);
+			}
+			
+		}
+	}
+	
+	static void calculateConfidence(Set<Integer>s1,Set<Integer> s2){
+		int s1tos2Count=0;
+		int s2tos1Count=0;
+		int supportCount=0;
+		for(Set<Integer> s:dataSet){
+			Set<Integer>set1=new HashSet<Integer>();
+			Set<Integer>set2=new HashSet<Integer>();
+			set1.addAll(s1);
+			set1.removeAll(s);
+			if(set1.isEmpty())
+				s1tos2Count++;
+			set2.addAll(s2);
+			set2.removeAll(s);
+			if(set2.isEmpty())
+				s2tos1Count++;
+			if(set1.isEmpty() && set2.isEmpty())
+				supportCount++;
+			
+		}
+		
+		Float s1tos2Confidence=new Float(supportCount)/new Float(s1tos2Count);
+		if(s1tos2Confidence>=mincon){
+			if(associationRules.get(s1)==null){
+				Set<Set<Integer>> s2Set=new HashSet<Set<Integer>>();
+				s2Set.add(s2);
+				associationRules.put(s1, s2Set);				
+			}
+			else
+				associationRules.get(s1).add(s2);
+			
+		}
+		
+		Float s2tos1Confidence=new Float(supportCount)/new Float(s2tos1Count);
+		if(s2tos1Confidence>=mincon){
+			if(associationRules.get(s2)==null){
+				Set<Set<Integer>> s2Set=new HashSet<Set<Integer>>();
+				s2Set.add(s1);
+				associationRules.put(s2, s2Set);
+			}
+			else
+				associationRules.get(s2).add(s1);
+		}
+	   
+	
+	}
+	
+	static void getAssociationRules(){
+		 for(Set<Integer> key:associationRules.keySet()){
+				for(Set<Integer> value:associationRules.get(key))
+				System.out.println(valueToName(key)+"-->" + valueToName(value) + "\n");
+			}
+		
+	}
+	
+	static String valueToName(Set<Integer> key){
+		String name = "";
+		for(Integer i:key){
+			name += productName.get(i) + "," ;
+		}
+		return name;
+	}
+	
 }
 
 
