@@ -11,8 +11,9 @@ static	Map<Set<Integer>,Integer> frequentSetTemp=new HashMap<Set<Integer>,Intege
 static Map<Set<Integer>,Set<Set<Integer>>> associationRules=new HashMap<Set<Integer>,Set<Set<Integer>>>();
 static Map<Integer,String> productName=new HashMap<Integer,String>();
 
-static int minsup; 
+static float minsup; 
 static float mincon;
+static int suportCount;
 
 	public static void main(String[] args) {
 		Scanner in=new Scanner(System.in);
@@ -58,25 +59,32 @@ static float mincon;
 			}
 			con.close();
 			
-			System.out.println("Enter the minimum support value:");
-			minsup=in.nextInt();
-		System.out.println("\nEnter the minimum confidence value:");
+			System.out.println("Enter the Minimum Support Count value (In Integer):");
+			suportCount=in.nextInt();
+			minsup=new Float(suportCount)/new Float(dataSet.size());
+		    System.out.println("Enter the minimum confidence value (In Decimal):");
 			mincon=in.nextFloat();
+			System.out.println("\n*************************************************");
+			System.out.println(" ***************User Entered Values***************");
+			System.out.println("\nMin support:"+minsup+" \nMin confidence:"+mincon);
 			
 			/* dataSet is the java Implementation of the DataBase*/
-			System.out.println("****The Transaction dataset****:\n");
+			System.out.println("\n*************************************************\n");
+			System.out.println(" *************The Transaction dataset*************\n");
 			for(Set<Integer> set:dataSet){
 				for(Integer i:set){
 					System.out.print(i+" ");
 				}
-//				System.out.println("\n");
+				System.out.println("\n");
 			}
 			
-			System.out.println("****Id to product Mapping****");
+			System.out.println("\n*************************************************\n");
+			System.out.println(" **************Id to product Mapping**************");
 			for(Integer i: productName.keySet())
-				System.out.println(i+productName.get(i));
+				System.out.println(i+" : "+productName.get(i));
 			
-			System.out.println("****C****");
+			System.out.println("\n*************************************************\n");
+			System.out.println("**************************C************************");
 			for(Set<Integer> key:candidateSet.keySet()){
 				System.out.println(key + ": =  " + candidateSet.get(key));
 							
@@ -85,9 +93,14 @@ static float mincon;
 			frequentSet.clear();
 			prune();
 			frequentItemSetGeneration();
-			mineAssociationRules();
-			getAssociationRules();
+					
+			System.out.println("\n*************************************************\n");
+			System.out.println("  **************All Frequent Itemsets**************");
+			for(Set<Integer> k:frequentSet.keySet())
+				System.out.println(k + ": =  " + frequentSet.get(k));
 			
+			mineAssociationRules();
+			getAssociationRules();			
 			
 		}
 		catch(Exception e){System.out.println(e);}
@@ -122,15 +135,19 @@ static float mincon;
 	static void prune(){
 		frequentSetTemp.clear();
 		for(Set<Integer> key:candidateSet.keySet()){
-			if(candidateSet.get(key)>=minsup){
+			Float sup=new Float(candidateSet.get(key))/new Float (dataSet.size());
+			if(sup>=minsup){
 				frequentSetTemp.put(key,candidateSet.get(key));
 				frequentSet.put(key,candidateSet.get(key));
 			}
 		}
-		System.out.println("****L****");
+		if(!frequentSetTemp.isEmpty()){
+		System.out.println("\n*************************************************\n");
+		System.out.println("  ************************L************************");
 		for(Set<Integer> key : frequentSetTemp.keySet()){
 			System.out.println(key + ": =  " + frequentSetTemp.get(key));
 			
+		}
 		}
 		
 	}
@@ -170,7 +187,8 @@ static float mincon;
 					candidateSet.put(s, numberofOccurence(s));			
 				
 			}
-			System.out.println("****C****");
+			System.out.println("\n*************************************************");
+			System.out.println("  ***********************C*************************");
 			for(Set<Integer> key:candidateSet.keySet())
 				System.out.println(key + ": =  " + candidateSet.get(key));
 			
@@ -179,9 +197,6 @@ static float mincon;
 				next=false;
 			size++;
 		}
-//		System.out.println("****LastFrequentItemSet****");
-//		for(Set<Integer> k:frequentSetTemp.keySet())
-//			System.out.println(k + ": =  " + frequentSetTemp.get(k));
 	}
 	
 	static void mineAssociationRules(){
@@ -253,6 +268,8 @@ static float mincon;
 	}
 	
 	static void getAssociationRules(){
+		System.out.println("\n*************************************************\n");
+		System.out.println("****************Association Rules******************");
 		 for(Set<Integer> key:associationRules.keySet()){
 				for(Set<Integer> value:associationRules.get(key))
 				System.out.println(valueToName(key)+"-->" + valueToName(value) + "\n");
@@ -263,7 +280,7 @@ static float mincon;
 	static String valueToName(Set<Integer> key){
 		String name = "";
 		for(Integer i:key){
-			name += productName.get(i) + "," ;
+			name += productName.get(i) + " " ;
 		}
 		return name;
 	}
