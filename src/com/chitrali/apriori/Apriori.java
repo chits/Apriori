@@ -10,6 +10,7 @@ static	Map<Set<Integer>,Integer> frequentSet=new HashMap<Set<Integer>,Integer>()
 static	Map<Set<Integer>,Integer> frequentSetTemp=new HashMap<Set<Integer>,Integer>();
 static Map<Set<Integer>,Set<Set<Integer>>> associationRules=new HashMap<Set<Integer>,Set<Set<Integer>>>();
 static Map<Integer,String> productName=new HashMap<Integer,String>();
+static Map<String,Float> confAR=new HashMap<String,Float>();
 
 static float minsup; 
 static float mincon;
@@ -100,7 +101,13 @@ static int suportCount;
 				System.out.println(k + ": =  " + frequentSet.get(k));
 			
 			mineAssociationRules();
-			getAssociationRules();			
+			getAssociationRules();	
+			
+			System.out.println("\n*************************************************\n");
+			System.out.println(" **************Rule Confidence**************");
+			for(String i: confAR.keySet())
+				System.out.println(i+" : "+confAR.get(i));
+			
 			
 		}
 		catch(Exception e){System.out.println(e);}
@@ -183,10 +190,13 @@ static int suportCount;
 				}
 			}
 			
+			
+			
 			for(Set<Integer> s:candidate){
+				if(pruneCandidate(s))
 					candidateSet.put(s, numberofOccurence(s));			
-				
-			}
+				}
+			
 			System.out.println("\n*************************************************");
 			System.out.println("  ***********************C*************************");
 			for(Set<Integer> key:candidateSet.keySet())
@@ -246,7 +256,8 @@ static int suportCount;
 			if(associationRules.get(s1)==null){
 				Set<Set<Integer>> s2Set=new HashSet<Set<Integer>>();
 				s2Set.add(s2);
-				associationRules.put(s1, s2Set);				
+				ConfOfAssociationRuleMap(associationRules.put(s1, s2Set),s1tos2Confidence);	
+				
 			}
 			else
 				associationRules.get(s1).add(s2);
@@ -258,7 +269,7 @@ static int suportCount;
 			if(associationRules.get(s2)==null){
 				Set<Set<Integer>> s2Set=new HashSet<Set<Integer>>();
 				s2Set.add(s1);
-				associationRules.put(s2, s2Set);
+				ConfOfAssociationRuleMap(associationRules.put(s2, s2Set),s2tos1Confidence);
 			}
 			else
 				associationRules.get(s2).add(s1);
@@ -283,6 +294,31 @@ static int suportCount;
 			name += productName.get(i) + " " ;
 		}
 		return name;
+	}
+	
+	static void ConfOfAssociationRuleMap(Set<Set<Integer>> a, Float confidence){
+		
+		String Rule="";
+		Float conf;
+		for(Set<Integer> key:associationRules.keySet()){
+			for(Set<Integer> value:associationRules.get(key))
+			 Rule+=valueToName(key)+"-->" + valueToName(value);
+		}
+		conf=confidence;
+		confAR.put(Rule, conf);
+	}
+	
+	static boolean pruneCandidate(Set<Integer> candidate){
+		Set<Set<Integer>> properSubset=ProperSubset.getProperSubset(candidate.size()-1, candidate);
+		for(Set<Integer> s1:properSubset){
+			if(s1.size() == candidate.size()-1)
+			{
+				if(frequentSetTemp.get(s1)==null)
+					return false;
+			}
+		}
+		
+		return true;
 	}
 	
 }
